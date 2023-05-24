@@ -15,7 +15,6 @@
 #include "tcp_sum.h"
 #include "transport.h"
 
-
 /* called by the transport layer thread to unblock the calling application,
  * e.g. when the connection is complete, or when an error is detected while
  * attempting to make the connection.  before calling this, the STCP layer may
@@ -47,7 +46,6 @@ void stcp_unblock_application(mysocket_t sd)
     }
 }
 
-
 /* called by the transport layer to wait for new data, either from the network
  * or from the application, or for the application to request that the
  * mysocket be closed, depending on the value of flags.  abstime is the
@@ -59,8 +57,8 @@ void stcp_unblock_application(mysocket_t sd)
  * returns bit vector corresponding to application/network data being ready,
  * of the same format as the flags passed (see the enum in stcp_api.h).
  */
-unsigned int stcp_wait_for_event(mysocket_t             sd,
-                                 unsigned int           flags,
+unsigned int stcp_wait_for_event(mysocket_t sd,
+                                 unsigned int flags,
                                  const struct timespec *abstime)
 {
     unsigned int rc = 0;
@@ -135,7 +133,7 @@ done:
 void stcp_set_context(mysocket_t sd, const void *stcp_state)
 {
     mysock_context_t *ctx = _mysock_get_context(sd);
-    ctx->stcp_state = (void *) stcp_state;
+    ctx->stcp_state = (void *)stcp_state;
 }
 
 void *stcp_get_context(mysocket_t sd)
@@ -162,8 +160,8 @@ ssize_t stcp_network_recv(mysocket_t sd, void *dst, size_t max_len)
     /* checksum should have been verified by underlying network layer in
      * this implementation.
      */
-    assert(len <= 0 ||
-           _mysock_verify_checksum(_mysock_get_context(sd), dst, len));
+
+    assert(len <= 0 || _mysock_verify_checksum(_mysock_get_context(sd), dst, len));
     return len;
 }
 
@@ -188,11 +186,11 @@ ssize_t stcp_network_recv(mysocket_t sd, void *dst, size_t max_len)
 ssize_t stcp_network_send(mysocket_t sd, const void *src, size_t src_len, ...)
 {
     mysock_context_t *ctx = _mysock_get_context(sd);
-    char              packet[MAX_IP_PAYLOAD_LEN];
-    size_t            packet_len;
-    const void       *next_buf;
-    va_list           argptr;
-    struct tcphdr    *header;
+    char packet[MAX_IP_PAYLOAD_LEN];
+    size_t packet_len;
+    const void *next_buf;
+    va_list argptr;
+    struct tcphdr *header;
 
     assert(ctx && src);
 
@@ -213,14 +211,14 @@ ssize_t stcp_network_send(mysocket_t sd, const void *src, size_t src_len, ...)
 
     /* fill in fields in the TCP header that aren't handled by students */
     assert(packet_len >= sizeof(struct tcphdr));
-    header = (struct tcphdr *) packet;
+    header = (struct tcphdr *)packet;
 
     header->th_sport = _network_get_port(&ctx->network_state);
     /* N.B. assert(header->th_sport > 0) fires in the UDP SYN-ACK case */
 
     assert(ctx->network_state.peer_addr.sa_family == AF_INET);
     header->th_dport =
-        ((struct sockaddr_in *) &ctx->network_state.peer_addr)->sin_port;
+        ((struct sockaddr_in *)&ctx->network_state.peer_addr)->sin_port;
     assert(header->th_dport > 0);
 
     header->th_sum = 0; /* set below */
@@ -266,4 +264,3 @@ void stcp_fin_received(mysocket_t sd)
     DEBUG_LOG(("stcp_fin_received(%d):  setting eof flag\n", sd));
     _mysock_enqueue_buffer(ctx, &ctx->app_send_queue, NULL, 0);
 }
-
